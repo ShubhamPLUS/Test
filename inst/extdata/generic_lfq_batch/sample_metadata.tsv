@@ -1,0 +1,17 @@
+sample_id	raw_file	condition	replicate	batch	instrument
+S01	S01.raw	Control	1	batch1	Orbitrap_Eclipse
+S02	S02.raw	Treatment	2	batch2	Orbitrap_Eclipse
+S03	S03.raw	Control	3	batch1	Orbitrap_Eclipse
+S04	S04.raw	Treatment	4	batch2	Orbitrap_Eclipse
+S05	S05.raw	Control	1	batch1	Orbitrap_Eclipse
+S06	S06.raw	Treatment	2	batch2	Orbitrap_Eclipse
+S07	S07.raw	Control	3	batch1	Orbitrap_Eclipse
+S08	S08.raw	Treatment	4	batch2	Orbitrap_Eclipse
+S09	S09.raw	Control	1	batch1	Orbitrap_Eclipse
+S10	S10.raw	Treatment	2	batch2	Orbitrap_Eclipse
+S11	S11.raw	Control	3	batch1	Orbitrap_Eclipse
+S12	S12.raw	Treatment	4	batch2	Orbitrap_Eclipse
+S13	S13.raw	Control	1	batch1	Orbitrap_Eclipse
+S14	S14.raw	Treatment	2	batch2	Orbitrap_Eclipse
+S15	S15.raw	Control	3	batch1	Orbitrap_Eclipse
+S16	S16.raw	Treatment	4	batch2	Orbitrap_Eclipse

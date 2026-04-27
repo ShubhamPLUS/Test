@@ -1,0 +1,44 @@
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+.Renviron
+
+# renv
+renv/library/
+renv/staging/
+renv/sandbox/
+
+# targets
+_targets/
+_targets.R.lock
+
+# Results / outputs (never commit real data)
+results/
+*.rds
+*.RData
+
+# Large files
+*.parquet
+*.tsv.gz
+
+# System
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Package build artifacts
+*.tar.gz
+src/*.so
+src/*.o
+/doc/
+/Meta/
+
+# Secrets
+.Renviron
+secrets/
+*.pem
+*.key

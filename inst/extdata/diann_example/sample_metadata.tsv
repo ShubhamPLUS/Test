@@ -1,0 +1,9 @@
+sample_id	raw_file	condition	replicate	batch
+Run1	Run1.raw	Ctrl	1	batch1
+Run2	Run2.raw	Ctrl	2	batch1
+Run3	Run3.raw	Ctrl	3	batch1
+Run4	Run4.raw	Ctrl	4	batch1
+Run5	Run5.raw	Treat	1	batch1
+Run6	Run6.raw	Treat	2	batch1
+Run7	Run7.raw	Treat	3	batch1
+Run8	Run8.raw	Treat	4	batch1

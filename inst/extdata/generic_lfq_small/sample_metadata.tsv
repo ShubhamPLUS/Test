@@ -1,0 +1,13 @@
+sample_id	raw_file	condition	replicate	batch	instrument
+S01	S01_DIA.raw	Control	1	batch1	Orbitrap_Astral
+S02	S02_DIA.raw	Control	2	batch1	Orbitrap_Astral
+S03	S03_DIA.raw	Control	3	batch1	Orbitrap_Astral
+S04	S04_DIA.raw	Control	4	batch1	Orbitrap_Astral
+S05	S05_DIA.raw	Control	5	batch1	Orbitrap_Astral
+S06	S06_DIA.raw	Control	6	batch1	Orbitrap_Astral
+S07	S07_DIA.raw	Treatment	1	batch1	Orbitrap_Astral
+S08	S08_DIA.raw	Treatment	2	batch1	Orbitrap_Astral
+S09	S09_DIA.raw	Treatment	3	batch1	Orbitrap_Astral
+S10	S10_DIA.raw	Treatment	4	batch1	Orbitrap_Astral
+S11	S11_DIA.raw	Treatment	5	batch1	Orbitrap_Astral
+S12	S12_DIA.raw	Treatment	6	batch1	Orbitrap_Astral

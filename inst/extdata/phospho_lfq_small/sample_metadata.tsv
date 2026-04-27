@@ -1,0 +1,13 @@
+sample_id	raw_file	condition	replicate	batch
+S01	S01.raw	Ctrl	1	batch1
+S02	S02.raw	Ctrl	2	batch1
+S03	S03.raw	Ctrl	3	batch1
+S04	S04.raw	Ctrl	4	batch1
+S05	S05.raw	Ctrl	5	batch1
+S06	S06.raw	Ctrl	6	batch1
+S07	S07.raw	Treat	1	batch1
+S08	S08.raw	Treat	2	batch1
+S09	S09.raw	Treat	3	batch1
+S10	S10.raw	Treat	4	batch1
+S11	S11.raw	Treat	5	batch1
+S12	S12.raw	Treat	6	batch1

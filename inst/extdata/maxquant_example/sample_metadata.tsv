@@ -1,0 +1,9 @@
+sample_id	raw_file	condition	replicate	batch	instrument
+Experiment1	Experiment1.raw	Ctrl	1	batch1	Orbitrap_Eclipse
+Experiment2	Experiment2.raw	Ctrl	2	batch1	Orbitrap_Eclipse
+Experiment3	Experiment3.raw	Ctrl	3	batch1	Orbitrap_Eclipse
+Experiment4	Experiment4.raw	Ctrl	4	batch1	Orbitrap_Eclipse
+Experiment5	Experiment5.raw	Treat	1	batch1	Orbitrap_Eclipse
+Experiment6	Experiment6.raw	Treat	2	batch1	Orbitrap_Eclipse
+Experiment7	Experiment7.raw	Treat	3	batch1	Orbitrap_Eclipse
+Experiment8	Experiment8.raw	Treat	4	batch1	Orbitrap_Eclipse

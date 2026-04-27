@@ -1,0 +1,26 @@
+# Example contrast definitions for ProteoForge
+# Copy and adapt this file to your config.
+
+contrasts:
+  # Simple two-group comparison
+  - name: "Treatment_vs_Control"
+    numerator: "Treatment"
+    denominator: "Control"
+
+  # Multiple comparisons
+  - name: "Dose10_vs_Vehicle"
+    numerator: "Dose10"
+    denominator: "Vehicle"
+
+  - name: "Dose100_vs_Vehicle"
+    numerator: "Dose100"
+    denominator: "Vehicle"
+
+  - name: "Dose100_vs_Dose10"
+    numerator: "Dose100"
+    denominator: "Dose10"
+
+  # Paired design (add block_column: "subject_id" to statistics section)
+  - name: "After_vs_Before"
+    numerator: "After"
+    denominator: "Before"

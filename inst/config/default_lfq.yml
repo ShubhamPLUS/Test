@@ -1,0 +1,96 @@
+project:
+  name: "example_project"
+  organism: "human"
+  output_dir: "results"
+  seed: 1234
+
+input:
+  quant_file: "path/to/protein_matrix.tsv"
+  metadata_file: "path/to/sample_metadata.tsv"
+  format: "auto"
+  analysis_level: "protein"
+  paired_proteome_file: null
+  quant_column_preference:
+    - "PG.MaxLFQ"
+    - "LFQ intensity"
+    - "MaxLFQ Intensity"
+    - "Abundance"
+    - "Intensity"
+    - "Area"
+
+filtering:
+  remove_contaminants: true
+  remove_reverse_decoys: true
+  remove_only_identified_by_site: true
+  require_master_protein: false
+  min_unique_peptides: 1
+  min_valid_fraction_per_condition: 0.5
+  qvalue_cutoff: 0.01
+
+preprocessing:
+  zero_to_na: true
+  log2_transform: true
+  normalization: "median"
+  batch_correction: "none"
+  batch_column: "batch"
+  imputation: "mixed"
+  imputation_scope: "condition_aware"
+  mnar_threshold: 0.6
+  imputation_warning: true
+
+statistics:
+  engine: "limma_deqms"
+  design_formula: "~ 0 + condition"
+  block_column: null
+  covariates: []
+  contrasts:
+    - name: "Treatment_vs_Control"
+      numerator: "Treatment"
+      denominator: "Control"
+  p_adjust_method: "BH"
+  alpha: 0.05
+  lfc_cutoff: 1
+
+phospho:
+  enabled: false
+  localization_prob_cutoff: 0.75
+  parent_correction: true
+  kinase_methods: ["ksea", "kea3", "decoupler"]
+  motif_window: 7
+  consensus_min_methods: 2
+
+enrichment:
+  enabled: true
+  id_type: "auto"
+  organism: "human"
+  databases: ["GO_BP", "GO_MF", "GO_CC", "KEGG", "Reactome", "WikiPathways", "MSigDB_Hallmark"]
+  ora: true
+  gsea: true
+  universe: "detected_proteome"
+  min_geneset_size: 10
+  max_geneset_size: 500
+  p_adjust_method: "BH"
+
+network:
+  enabled: true
+  string_score_threshold: 700
+  max_nodes_plot: 200
+  omnipath: true
+  export_cytoscape: true
+
+plots:
+  formats: ["pdf", "png"]
+  dpi: 300
+  width: 7
+  height: 5
+  theme: "proteoforge"
+  colorblind_safe: true
+  label_top_n: 15
+  heatmap_top_n: 50
+
+reports:
+  excel: true
+  word: true
+  pptx: true
+  quarto_html: true
+  zip_results: true

@@ -1,0 +1,13 @@
+sample_id	raw_file	condition	replicate	subject_id	batch	instrument
+Before_P1	Before_P1.raw	Before	1	P1	batch1	Orbitrap_Astral
+Before_P2	Before_P2.raw	Before	2	P2	batch1	Orbitrap_Astral
+Before_P3	Before_P3.raw	Before	3	P3	batch1	Orbitrap_Astral
+Before_P4	Before_P4.raw	Before	4	P4	batch1	Orbitrap_Astral
+Before_P5	Before_P5.raw	Before	5	P5	batch1	Orbitrap_Astral
+Before_P6	Before_P6.raw	Before	6	P6	batch1	Orbitrap_Astral
+After_P1	After_P1.raw	After	1	P1	batch1	Orbitrap_Astral
+After_P2	After_P2.raw	After	2	P2	batch1	Orbitrap_Astral
+After_P3	After_P3.raw	After	3	P3	batch1	Orbitrap_Astral
+After_P4	After_P4.raw	After	4	P4	batch1	Orbitrap_Astral
+After_P5	After_P5.raw	After	5	P5	batch1	Orbitrap_Astral
+After_P6	After_P6.raw	After	6	P6	batch1	Orbitrap_Astral

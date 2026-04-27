@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use ProteoForge, please cite it as below."
+type: software
+title: "ProteoForge: Reproducible LFQ Proteomics and Phosphoproteomics Analysis"
+version: 0.1.0
+date-released: "2026-04-27"
+url: "https://github.com/shubhamplus/test"
+repository-code: "https://github.com/shubhamplus/test"
+license: MIT
+abstract: >
+  ProteoForge is an R package and production Shiny application for end-to-end
+  label-free quantitative (LFQ) proteomics and phosphoproteomics analysis.
+  It supports DIA-NN, Spectronaut, FragPipe, MaxQuant, Proteome Discoverer,
+  and Skyline inputs, and provides a complete reproducible pipeline from
+  raw intensities to publication-ready reports including differential
+  abundance analysis, functional enrichment, network analysis, and
+  phosphosite-level inference.
+authors:
+  - name: "ProteoForge Contributors"
+keywords:
+  - proteomics
+  - phosphoproteomics
+  - mass spectrometry
+  - label-free quantification
+  - differential abundance
+  - bioinformatics
+  - R
+  - Bioconductor
