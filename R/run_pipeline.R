@@ -323,18 +323,7 @@ run_pipeline <- function(config,
 
 # ── Stub functions (implemented in later phases) ───────────────────────────────
 
-#' @keywords internal
-import_diann       <- function(...) stop("import_diann() — Phase 4",       call.=FALSE)
-#' @keywords internal
-import_spectronaut <- function(...) stop("import_spectronaut() — Phase 4", call.=FALSE)
-#' @keywords internal
-import_fragpipe    <- function(...) stop("import_fragpipe() — Phase 4",    call.=FALSE)
-#' @keywords internal
-import_maxquant    <- function(...) stop("import_maxquant() — Phase 4",    call.=FALSE)
-#' @keywords internal
-import_pd          <- function(...) stop("import_pd() — Phase 4",          call.=FALSE)
-#' @keywords internal
-import_skyline     <- function(...) stop("import_skyline() — Phase 4",     call.=FALSE)
+# Importers now fully implemented in their own files (Phase 4)
 
 #' @keywords internal
 run_enrichment <- function(stat_results, pfd, dirs, config) {
