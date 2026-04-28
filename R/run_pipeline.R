@@ -327,13 +327,70 @@ run_pipeline <- function(config,
 
 #' @keywords internal
 run_enrichment <- function(stat_results, pfd, dirs, config) {
-  # Implemented in Phase 5
-  NULL
+  ecfg <- config$enrichment %||% list()
+  org  <- config$project$organism %||% "human"
+  dbs  <- ecfg$databases %||% c("GO_BP","KEGG","Reactome")
+  id_type <- ecfg$id_type %||% "auto"
+  universe_ids <- rownames(pfd@raw_matrix)
+
+  all_results <- list()
+  for (cname in names(stat_results)) {
+    ora <- tryCatch(
+      run_ora(stat_results[[cname]], universe_ids,
+              organism=org, databases=dbs, id_type=id_type),
+      error=function(e) { collect_warning(sprintf("ORA failed: %s", conditionMessage(e)),"enrichment"); NULL }
+    )
+    gsea <- tryCatch(
+      run_gsea(stat_results[[cname]], organism=org, databases=dbs, id_type=id_type),
+      error=function(e) { collect_warning(sprintf("GSEA failed: %s", conditionMessage(e)),"enrichment"); NULL }
+    )
+    if (!is.null(ora$all)) {
+      data.table::fwrite(ora$all, fs::path(dirs["enrich_tables"],
+        safe_filename(config$project$name %||% "proteoforge","ENRICH",
+                      "protein",cname,"ORA_all","tsv",Sys.time())), sep="\t")
+    }
+    if (!is.null(gsea)) {
+      data.table::fwrite(gsea, fs::path(dirs["enrich_tables"],
+        safe_filename(config$project$name %||% "proteoforge","ENRICH",
+                      "protein",cname,"GSEA","tsv",Sys.time())), sep="\t")
+    }
+    all_results[[cname]] <- list(ora=ora$all, gsea=gsea)
+  }
+  all_results
 }
+
 #' @keywords internal
 run_networks <- function(stat_results, pfd, dirs, config) {
-  # Implemented in Phase 5
-  NULL
+  ncfg <- config$network %||% list()
+  org  <- config$project$organism %||% "human"
+
+  for (cname in names(stat_results)) {
+    net <- tryCatch(
+      run_string_network(stat_results[[cname]],
+                          organism        = org,
+                          score_threshold = ncfg$string_score_threshold %||% 700L,
+                          max_nodes       = ncfg$max_nodes_plot %||% 200L,
+                          output_dir      = dirs["net_tables"]),
+      error=function(e) { collect_warning(sprintf("STRING failed: %s", conditionMessage(e)),"network"); NULL }
+    )
+    if (!is.null(net$plot)) {
+      save_plot(net$plot, dirs["net_plots"],
+                safe_filename(config$project$name %||% "proteoforge","NET",
+                              "protein",cname,"string_network","",Sys.time()) |>
+                  fs::path_ext_remove(),
+                formats=config$plots$formats %||% c("pdf","png"),
+                module="NET", plot_type="string_network", contrast=cname,
+                params_hash=hash_params(config))
+    }
+    if (isTRUE(ncfg$omnipath %||% FALSE)) {
+      tryCatch(
+        run_omnipath(stat_results[[cname]], organism=org,
+                     output_dir=dirs["net_tables"]),
+        error=function(e) collect_warning(sprintf("OmniPath: %s", conditionMessage(e)),"network")
+      )
+    }
+  }
+  invisible(NULL)
 }
 #' @keywords internal
 run_phospho_pipeline <- function(pfd, stat_results, dirs, config) {
