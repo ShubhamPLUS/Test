@@ -1,0 +1,111 @@
+---
+title: "Using the ProteoForge Shiny Application"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Using the ProteoForge Shiny Application}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+## Launching the app
+
+```{r launch, eval=FALSE}
+library(proteoforge)
+launch_app()
+
+# With parallel workers
+launch_app(workers = 4L)
+
+# For server deployment
+launch_app(host = "0.0.0.0", port = 3838, launch = FALSE)
+```
+
+Or from the command line:
+
+```bash
+Rscript -e "proteoforge::launch_app()"
+```
+
+## Application layout
+
+The app is organized as a tab-based navbar with 14 panels:
+
+### 1. Welcome
+Overview of capabilities and quick-start instructions.
+
+### 2. Upload
+- Select your input software (or Auto-detect)
+- Upload quantification file and sample metadata
+- Click **Import Data** — runs asynchronously so the UI stays responsive
+- Preview the imported matrix
+
+### 3. Column Mapping
+Verify or correct automatic column assignments for gene symbols, protein IDs,
+phosphosite localisation probabilities, and sequence windows.
+
+### 4. Experimental Design
+- Edit sample group assignments in the interactive table
+- Define contrasts using the drop-down numerator/denominator builder
+- Click **Add Contrast** to add multiple pairwise comparisons
+
+### 5. QC
+- Click **Compute QC Metrics** to generate all five QC plots:
+  ID counts, intensity distributions, CV distribution, PCA, sample correlation
+- Outlier samples are highlighted with a warning badge
+
+### 6. Preprocessing
+- Set filter thresholds (min valid fraction, min replicates)
+- Choose normalisation method
+- Choose imputation method
+- Click **Run Preprocessing** — before/after boxplots update automatically
+
+### 7. Statistics
+- Set FDR and log₂FC thresholds
+- Toggle DEqMS moderation
+- Click **Run Statistics** — summary table with per-contrast counts
+- Select a contrast to view the interactive volcano plot
+- Download results as TSV
+
+### 8. Heatmaps
+Choose number of features, sorting criterion, contrast, and clustering options
+to generate a publication-quality Z-scored heatmap.
+
+### 9. Venn / UpSet
+Select contrasts and direction (all/up/down) to generate Venn diagrams
+(≤4 sets) or UpSet plots (≥5 sets), plus an intersection table.
+
+### 10. Enrichment
+Run ORA or GSEA on any contrast across GO/KEGG/Reactome databases. Results
+are displayed as dot plots (ORA) and ridge plots (GSEA) with interactive tables.
+
+### 11. Network
+Run STRING network analysis on significant proteins from any contrast.
+Export as PNG or GraphML for Cytoscape.
+
+### 12. Phospho
+Full phosphoproteomics sub-pipeline with localisation filtering, kinase
+activity inference, and OmniPath/PSP annotation — available when a
+phosphosite dataset is loaded.
+
+### 13. Report
+Generate all output formats:
+- Excel workbook (all results + QC + enrichment)
+- Word document with methods template
+- PowerPoint slides with figures
+- AI summary JSON
+- Rendered Quarto HTML report
+
+### 14. Logs
+Live run log, warning list, and session information.
+
+## Docker deployment
+
+```bash
+docker run -p 3838:3838 proteoforge/shiny:latest
+```
+
+See the [Docker guide](reproducibility.html) for full deployment instructions.

@@ -1,0 +1,167 @@
+---
+title: "Phosphoproteomics Workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Phosphoproteomics Workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
+                       fig.width = 7, fig.height = 5)
+```
+
+## Overview
+
+ProteoForge provides a dedicated phosphoproteomics pipeline that:
+
+1. Filters to Class-1 localised sites
+2. Standardises site identifiers
+3. Corrects for parent-protein abundance changes
+4. Runs differential abundance with limma-DEqMS
+5. Infers kinase activity (KSEA, KEA3, decoupleR)
+6. Runs phosphomotif enrichment (rmotifx)
+7. Annotates sites with PhosphoSitePlus and OmniPath
+
+## Loading phosphosite data
+
+```{r import, eval=FALSE}
+library(proteoforge)
+
+quant_file <- system.file("extdata", "phospho_lfq_small",
+                           "phospho_sites.tsv", package = "proteoforge")
+meta_file  <- system.file("extdata", "phospho_lfq_small",
+                           "sample_metadata.tsv", package = "proteoforge")
+
+pfd_phospho <- import_generic(
+  quant_file,
+  meta_file,
+  config = list(input = list(analysis_level = "phosphosite",
+                              quant_type     = "LFQ")),
+  feature_id_col = "SiteID"
+)
+```
+
+## Step 1 — Localisation filter
+
+```{r loc_filter, eval=FALSE}
+# Retain Class-1 sites (loc_prob ≥ 0.75)
+pfd_phospho <- filter_phospho_sites(pfd_phospho, loc_cutoff = 0.75)
+
+# Standardise IDs to <UniProt>_<Residue><Position>
+pfd_phospho <- standardise_site_ids(pfd_phospho,
+                                     protein_col  = "ProteinID",
+                                     residue_col  = "Residue",
+                                     position_col = "Position")
+```
+
+## Step 2 — Preprocessing
+
+```{r preprocess, eval=FALSE}
+pfd_phospho <- filter_features(pfd_phospho)
+pfd_phospho <- log2_transform(pfd_phospho)
+pfd_phospho <- normalise_matrix(pfd_phospho, method = "median")
+pfd_phospho <- impute_missing(pfd_phospho, method = "minprob")
+```
+
+For phosphosite data, MinProb imputation is preferred because most missing
+phosphosites are MNAR (below-detection regulatory events).
+
+## Step 3 — Parent-protein correction (optional)
+
+Corrects phosphosite intensities for changes in total protein abundance,
+isolating regulatory phosphorylation changes from stoichiometric ones.
+
+```{r parent_correct, eval=FALSE}
+# Load matched proteome
+pfd_protein <- import_generic(
+  system.file("extdata", "generic_lfq_small", "protein_intensities.tsv",
+              package = "proteoforge"),
+  meta_file
+)
+pfd_protein <- log2_transform(normalise_matrix(filter_features(pfd_protein)))
+
+# Correct
+correction_result <- parent_protein_correction(pfd_phospho, pfd_protein)
+pfd_phospho_corrected <- correction_result$corrected_pfd
+head(correction_result$correction_stats)
+```
+
+The regression model is: `log2(site) ~ log2(parent) + condition [+ batch]`
+
+## Step 4 — Differential abundance
+
+```{r de, eval=FALSE}
+config  <- list(stats = list(contrasts = "EGF-Ctrl", fdr = 0.05, log2fc_cutoff = 0.5))
+design  <- build_design_matrix(pfd_phospho_corrected, config)
+cm      <- build_contrast_matrix(design, config)
+ph_de   <- run_limma_deqms(pfd_phospho_corrected, design, cm, config)
+```
+
+## Step 5 — Kinase activity inference
+
+Three methods are run and a consensus is applied (≥2 methods must agree at
+adj.p < 0.05):
+
+```{r kinase, eval=FALSE}
+ka <- infer_kinase_activity(
+  ph_de[["EGF-Ctrl"]],
+  methods       = c("ksea", "decoupler"),
+  consensus_min = 2L
+)
+
+# Per-method results
+ka$ksea
+ka$decoupler
+
+# Consensus kinases
+ka$consensus
+```
+
+KEA3 uses the public REST API (`https://maayanlab.cloud/kea3/`); an internet
+connection is required. If unavailable, it is skipped with a warning.
+
+## Step 6 — Phosphomotif enrichment
+
+```{r motif, eval=FALSE}
+motifs <- run_phospho_motif(
+  ph_de[["EGF-Ctrl"]],
+  window          = 7L,
+  min_occurrences = 5L,
+  p_cutoff        = 1e-6
+)
+head(motifs$up_motifs)
+head(motifs$down_motifs)
+```
+
+## Step 7 — Site annotation
+
+```{r annotate, eval=FALSE}
+# OmniPath (free, no registration)
+annotated <- annotate_phosphosites(
+  ph_de[["EGF-Ctrl"]],
+  use_omnipath = TRUE
+)
+
+# Add PhosphoSitePlus (requires user-downloaded files)
+annotated <- annotate_phosphosites(
+  ph_de[["EGF-Ctrl"]],
+  psp_dir      = "~/psp_data",
+  use_omnipath = TRUE
+)
+```
+
+PSP data must be downloaded manually after registering at
+`https://www.phosphosite.org/`.
+
+## Running the complete pipeline automatically
+
+```{r pipeline, eval=FALSE}
+config <- yaml::read_yaml(
+  system.file("config", "default_phospho.yml", package = "proteoforge")
+)
+config$input$quant_file    <- "phospho_sites.tsv"
+config$input$metadata_file <- "samples.tsv"
+run_pipeline(config)
+```

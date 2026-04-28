@@ -1,0 +1,163 @@
+url: https://proteoforge.github.io/proteoforge
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+  bslib:
+    primary: "#2c7bb6"
+    code-color: "#d63384"
+
+home:
+  title: "ProteoForge — Quantitative Proteomics Platform"
+  description: >
+    A complete R/Bioconductor proteomics analysis platform with support for
+    DIA-NN, Spectronaut, FragPipe, MaxQuant, Proteome Discoverer, and Skyline.
+    Provides QC, normalisation, imputation, limma-DEqMS, enrichment, networks,
+    phosphoproteomics, and reproducible reporting.
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, news]
+    right: [github]
+  components:
+    github:
+      icon: fab fa-github
+      href: https://github.com/proteoforge/proteoforge
+
+articles:
+  - title: "Getting Started"
+    navbar: "Getting Started"
+    contents:
+      - quickstart
+  - title: "Data Input"
+    navbar: "Data Input"
+    contents:
+      - input_formats
+  - title: "Analysis Methods"
+    navbar: "Analysis"
+    contents:
+      - statistical_methods
+      - phospho_workflow
+  - title: "Application & Deployment"
+    navbar: "App & Deploy"
+    contents:
+      - shiny_app
+      - reproducibility
+
+reference:
+  - title: "Package launch"
+    desc: "Launch the interactive Shiny application"
+    contents:
+      - launch_app
+
+  - title: "Data Import"
+    desc: "Import data from major proteomics software"
+    contents:
+      - import_generic
+      - import_diann
+      - import_spectronaut
+      - import_fragpipe
+      - import_maxquant
+      - import_pd
+      - import_skyline
+      - detect_software
+      - ProteoForgeData
+
+  - title: "Metadata Validation"
+    contents:
+      - validate_sample_metadata
+      - validate_sample_id_match
+      - validate_replicate_counts
+      - check_batch_confounding
+      - assert_columns
+
+  - title: "QC"
+    contents:
+      - compute_qc_metrics
+      - generate_qc_plots
+
+  - title: "Preprocessing"
+    contents:
+      - filter_features
+      - log2_transform
+      - normalise_matrix
+      - classify_missingness
+      - summarise_missingness
+      - impute_missing
+
+  - title: "Statistics"
+    contents:
+      - build_design_matrix
+      - build_contrast_matrix
+      - run_limma_deqms
+      - write_contrast_tables
+      - build_gsea_ranking
+
+  - title: "Plots"
+    contents:
+      - plot_volcano
+      - plot_heatmap
+      - plot_overlap
+      - get_intersection_table
+      - theme_proteoforge
+      - pf_palette
+      - scale_colour_pf
+      - scale_color_pf
+      - scale_fill_pf
+      - save_plot
+
+  - title: "Functional Enrichment"
+    contents:
+      - run_ora
+      - run_gsea
+      - map_ids_to_entrez
+      - plot_ora_dotplot
+      - plot_gsea_ridge
+
+  - title: "Network Analysis"
+    contents:
+      - run_string_network
+      - run_omnipath
+
+  - title: "Phosphoproteomics"
+    contents:
+      - filter_phospho_sites
+      - standardise_site_ids
+      - parent_protein_correction
+      - infer_kinase_activity
+      - run_phospho_motif
+      - annotate_phosphosites
+
+  - title: "Export & Reporting"
+    contents:
+      - export_excel
+      - export_word
+      - export_pptx
+      - render_quarto_report
+      - write_ai_summary_json
+
+  - title: "Targets Pipeline"
+    contents:
+      - pf_targets_dirs
+      - pf_targets_exists
+      - pf_tar_read
+      - pf_tar_status
+
+  - title: "Utilities"
+    contents:
+      - run_pipeline
+      - make_output_dirs
+      - safe_filename
+      - sanitise_name
+      - hash_params
+      - write_param_hash
+      - init_logger
+      - collect_warning
+      - write_logs
+      - write_session_info
+      - pf_env
+
+news:
+  releases:
+  - text: "See NEWS.md"
+    href: news/index.html

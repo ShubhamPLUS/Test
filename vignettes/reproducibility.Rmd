@@ -1,0 +1,146 @@
+---
+title: "Reproducibility and Deployment"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Reproducibility and Deployment}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+## Reproducibility tools
+
+ProteoForge provides four layers of reproducibility:
+
+### 1. Parameter hashing
+
+Every run computes a SHA-256 hash of the full configuration:
+
+```{r hash, eval=FALSE}
+library(proteoforge)
+config <- yaml::read_yaml("config.yml")
+hash   <- hash_params(config)
+cat("Config hash:", hash, "\n")
+# Writes hash to results/*/config_hash.txt
+write_param_hash(config, results_dir = "results/run_001")
+```
+
+### 2. Package locking with renv
+
+```{r renv, eval=FALSE}
+renv::snapshot()    # lock current package versions
+renv::restore()     # restore locked versions on a new machine
+```
+
+The `renv.lock` file is committed to the repository, ensuring byte-for-byte
+reproducible package environments across collaborators and CI/CD systems.
+
+### 3. Pipeline caching with targets
+
+```{r targets, eval=FALSE}
+# Only rerun steps whose inputs changed
+targets::tar_make()
+
+# Inspect which targets are outdated
+targets::tar_outdated()
+
+# Visualise the dependency graph
+targets::tar_visnetwork()
+```
+
+The `_targets/` store caches each step's output. Unchanged intermediate
+results (e.g., the import step) are never recomputed.
+
+### 4. Session information
+
+```{r session, eval=FALSE}
+dirs <- make_output_dirs(config)
+write_session_info(dirs$logs_dir)
+```
+
+Full `sessionInfo()` is written to `results/*/logs/session_info.txt` at the
+end of every run.
+
+## CLI flags
+
+```bash
+# Validate config and inputs, then exit
+Rscript inst/scripts/proteoforge_cli.R \
+  --config config.yml --validate-only
+
+# Dry run: print planned steps without executing
+Rscript inst/scripts/proteoforge_cli.R \
+  --config config.yml --dry-run
+
+# Resume (re-use cached targets from previous run)
+Rscript inst/scripts/proteoforge_cli.R \
+  --config config.yml --resume
+
+# Regenerate reports from existing results
+Rscript inst/scripts/proteoforge_cli.R \
+  --config config.yml --report-only
+
+# Run with 8 parallel workers
+Rscript inst/scripts/proteoforge_cli.R \
+  --config config.yml --cores 8
+```
+
+## Docker
+
+### Analysis image
+
+```bash
+# Build
+docker build -f docker/Dockerfile -t proteoforge:latest .
+
+# Run pipeline
+docker run --rm \
+  -v $(pwd)/data:/data \
+  -v $(pwd)/results:/results \
+  proteoforge:latest \
+  Rscript /app/inst/scripts/proteoforge_cli.R \
+    --config /data/config.yml \
+    --output-dir /results
+```
+
+### Shiny server image
+
+```bash
+docker build -f docker/Dockerfile.shiny -t proteoforge-shiny:latest .
+docker run -d -p 3838:3838 proteoforge-shiny:latest
+```
+
+### Docker Compose (analysis + Shiny together)
+
+```bash
+docker-compose up
+# Analysis UI: http://localhost:3838
+# Results mounted to ./results/
+```
+
+## GitHub Actions CI
+
+The repository includes four workflows:
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `R-CMD-check.yml` | push, PR | Full R CMD check on Ubuntu/macOS/Windows |
+| `test-pipeline.yml` | push, PR | End-to-end pipeline with synthetic datasets |
+| `lint.yml` | push, PR | lintr + styler style checks |
+| `docker-build.yml` | push to main | Build and push Docker images to GHCR |
+
+## Sharing analyses
+
+The AI summary JSON (`ai_summary.json`) provides a machine-readable synopsis
+of every analysis, enabling downstream LLM-assisted interpretation without
+exposing raw data.
+
+```{r ai, eval=FALSE}
+# Read the summary
+summary <- jsonlite::fromJSON("results/run_001/ai_summary.json")
+cat("Significant proteins:", summary$contrast_summaries[[1]]$n_significant, "\n")
+cat("Top up:", paste(summary$contrast_summaries[[1]]$top_up_proteins, collapse = ", "), "\n")
+```
