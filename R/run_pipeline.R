@@ -394,8 +394,74 @@ run_networks <- function(stat_results, pfd, dirs, config) {
 }
 #' @keywords internal
 run_phospho_pipeline <- function(pfd, stat_results, dirs, config) {
-  # Implemented in Phase 6
-  NULL
+  pcfg <- config$phospho %||% list()
+
+  # 1. Class-1 filter (already applied if imported via import_maxquant phospho)
+  pfd <- filter_phospho_sites(pfd,
+                               loc_cutoff=pcfg$localization_prob_cutoff %||% 0.75)
+
+  # 2. Standard preprocessing
+  pfd <- filter_features(pfd, config)
+  pfd <- log2_transform(pfd)
+  pfd <- normalise_matrix(pfd, method=config$preprocessing$normalization %||% "median")
+  pfd <- impute_missing(pfd, method="minprob", seed=config$project$seed %||% 1234L)
+
+  # 3. Parent-protein correction
+  if (isTRUE(pcfg$parent_correction %||% FALSE) &&
+      !is.null(config$input$paired_proteome_file) &&
+      file.exists(config$input$paired_proteome_file)) {
+    prot_pfd <- import_generic(config$input$paired_proteome_file,
+                                config$input$metadata_file, config)
+    prot_pfd <- log2_transform(prot_pfd)
+    prot_pfd <- normalise_matrix(prot_pfd)
+    prot_pfd <- impute_missing(prot_pfd, method="knn")
+    corr <- parent_protein_correction(pfd, prot_pfd, config)
+    pfd  <- corr$corrected_pfd
+    data.table::fwrite(corr$correction_stats,
+                       fs::path(dirs["phospho_tables"],"parent_correction_stats.tsv"),
+                       sep="\t")
+  }
+
+  # 4. Differential analysis
+  if (length(config$statistics$contrasts %||% list()) > 0) {
+    ph_stats <- run_limma_deqms(pfd, config)
+    for (cname in names(ph_stats)) {
+      data.table::fwrite(ph_stats[[cname]],
+        fs::path(dirs["phospho_tables"],
+                 safe_filename(config$project$name %||% "proteoforge",
+                               "PHOSPHO","site",cname,"all_results","tsv",Sys.time())),
+        sep="\t")
+    }
+
+    # 5. Kinase activity
+    ka_results <- tryCatch(
+      infer_kinase_activity(ph_stats[[1]],
+                             methods=pcfg$kinase_methods %||% c("ksea","decoupler"),
+                             consensus_min=pcfg$consensus_min_methods %||% 2L),
+      error=function(e) NULL
+    )
+    if (!is.null(ka_results$consensus) && nrow(ka_results$consensus)>0) {
+      data.table::fwrite(ka_results$consensus,
+        fs::path(dirs["phospho_tables"],"kinase_activity_consensus.tsv"),sep="\t")
+    }
+
+    # 6. Motif analysis
+    motifs <- tryCatch(
+      run_phospho_motif(ph_stats[[1]]),
+      error=function(e) NULL
+    )
+
+    # 7. PSP annotation
+    psp_dir <- config$phospho$psp_dir %||% NULL
+    if (!is.null(psp_dir)) {
+      ph_stats[[1]] <- tryCatch(
+        annotate_phosphosites(ph_stats[[1]], psp_dir=psp_dir),
+        error=function(e) ph_stats[[1]]
+      )
+    }
+  }
+
+  invisible(NULL)
 }
 
 # ── Utility ─────────────────────────────────────────────────────────────────────
