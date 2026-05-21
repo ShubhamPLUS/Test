@@ -44,7 +44,7 @@ pf_tar_read <- function(name, store = "_targets") {
     return(NULL)
   }
   tryCatch(
-    targets::tar_read(!!rlang::sym(name), store = store),
+    targets::tar_read_raw(name, store = store),
     error = function(e) NULL
   )
 }

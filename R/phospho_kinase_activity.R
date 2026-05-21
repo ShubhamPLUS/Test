@@ -141,7 +141,10 @@ infer_kinase_activity <- function(phospho_result_dt,
 
 #' @keywords internal
 .run_kea3 <- function(result_dt, top_n=100L) {
-  # KEA3 REST API
+  if (!requireNamespace("httr", quietly=TRUE)) {
+    collect_warning("Package 'httr' not installed. KEA3 skipped.", "kea3")
+    return(NULL)
+  }
   sig_sites <- result_dt[significant==TRUE, feature_id]
   if (length(sig_sites) == 0) return(NULL)
 
