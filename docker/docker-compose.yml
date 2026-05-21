@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+
+  ## Batch analysis container — runs the CLI pipeline
+  analysis:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: proteoforge/analysis:latest
+    volumes:
+      - ./data:/data:ro
+      - ./results:/results
+    environment:
+      - PF_CONFIG=/data/config.yml
+    command:
+      - --config
+      - /data/config.yml
+      - --output-dir
+      - /results
+    profiles:
+      - batch
+
+  ## Interactive Shiny application
+  shiny:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.shiny
+    image: proteoforge/shiny:latest
+    ports:
+      - "3838:3838"
+    volumes:
+      - ./results:/srv/shiny-server/proteoforge/results
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3838/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - shiny
