@@ -1,0 +1,42 @@
+## ProteoForge — Shiny Server image
+FROM rocker/shiny:4.4.1
+
+LABEL org.opencontainers.image.title="ProteoForge Shiny Server"
+LABEL org.opencontainers.image.description="Interactive proteomics analysis via Shiny"
+LABEL org.opencontainers.image.source="https://github.com/proteoforge/proteoforge"
+LABEL org.opencontainers.image.licenses="MIT"
+
+## System dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libcurl4-openssl-dev \
+      libssl-dev \
+      libxml2-dev \
+      libharfbuzz-dev \
+      libfribidi-dev \
+      libfontconfig1-dev \
+      libcairo2-dev \
+      libxt-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+## renv
+RUN Rscript -e "install.packages('renv', repos='https://cloud.r-project.org')"
+
+WORKDIR /srv/shiny-server/proteoforge
+
+## Restore packages from lockfile first (cached layer)
+COPY renv.lock ./
+RUN Rscript -e "renv::restore(prompt=FALSE)"
+
+## Install package
+COPY . .
+RUN Rscript -e "devtools::install('.', dependencies=TRUE, upgrade='never')"
+
+## Copy Shiny app to the server root
+RUN cp -r inst/shiny/* /srv/shiny-server/proteoforge/
+
+## Shiny server config: single-app mode
+COPY docker/shiny-server.conf /etc/shiny-server/shiny-server.conf
+
+EXPOSE 3838
+
+CMD ["/usr/bin/shiny-server"]

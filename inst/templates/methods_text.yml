@@ -1,0 +1,68 @@
+# ProteoForge methods text templates.
+# Every key is an AI-INSERTION-POINT — a future SaaS module can override
+# any paragraph by its key without modifying report generation code.
+# Use {{param_name}} for parameter substitution.
+
+methods: >
+  ## AI-INSERTION-POINT: methods
+
+  Protein intensities were processed with ProteoForge (v{{version}};
+  https://github.com/shubhamplus/test). Briefly, raw intensity values were
+  imported from {{source_software}} output files. Filtering was applied to
+  remove contaminants, reverse hits, and features with insufficient valid
+  values across conditions. Intensities were log2-transformed and
+  {{normalization}}-normalised. Missing values were imputed using the
+  {{imputation}} strategy: proteins with concentrated missingness at low
+  intensity (MNAR) were imputed by random sampling from a downshifted normal
+  distribution (MinProb; downshift = 1.8 SD, width = 0.3 SD), and proteins
+  with distributed missingness (MCAR) were imputed by weighted k-nearest-
+  neighbour imputation (k = 10). Differential abundance analysis was performed
+  using {{engine}} with Benjamini-Hochberg multiple-testing correction.
+
+qc: >
+  ## AI-INSERTION-POINT: qc
+
+  Quality control was performed on {{n_samples}} samples.
+  Detected feature counts, intensity distributions, sample-level Pearson
+  correlation, principal component analysis (PCA), and missing-value patterns
+  were inspected. Samples failing two or more QC criteria (low ID count,
+  high coefficient of variation, low inter-sample correlation, PCA outlier)
+  were flagged for review but not automatically removed.
+
+differential_abundance: >
+  ## AI-INSERTION-POINT: differential_abundance
+
+  Differential protein abundance was assessed using moderated t-statistics
+  (limma eBayes with trend = TRUE and robust = TRUE) followed by DEqMS
+  peptide-count-weighted variance correction. Proteins with
+  |log2FC| >= {{lfc_cutoff}} and adjusted p-value < {{alpha}} were considered
+  significantly changed.
+
+enrichment: >
+  ## AI-INSERTION-POINT: enrichment
+
+  Functional enrichment was performed on significantly changed proteins
+  using the detected proteome as the statistical universe (never the whole
+  genome). Over-representation analysis (ORA) was applied separately to
+  up-regulated and down-regulated proteins. Gene set enrichment analysis
+  (GSEA) was applied to the full signed –log10(p) × sign(log2FC) ranking.
+  Databases: {{databases}}.
+
+network: >
+  ## AI-INSERTION-POINT: network
+
+  Protein-protein interaction networks were retrieved from STRINGdb v12
+  (score threshold {{string_score_threshold}}). Network centrality
+  (degree, betweenness, eigenvector) was computed with igraph. Communities
+  were detected using the Leiden algorithm on the giant component.
+  Regulatory layer edges were overlaid from OmniPath.
+
+phospho: >
+  ## AI-INSERTION-POINT: phospho
+
+  Phosphoproteomic analysis was performed at the site level using Class 1
+  localisation probability (>= {{localization_prob_cutoff}}). Parent protein
+  abundance correction was applied by regressing log2(site intensity) on
+  log2(protein intensity) within each contrast. Kinase activity was inferred
+  by KSEA, KEA3, and decoupleR; consensus activity calls required agreement
+  of >= {{consensus_min_methods}} methods at adj.p < 0.05.

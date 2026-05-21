@@ -1,0 +1,136 @@
+---
+title: "Input Formats and Software Importers"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Input Formats and Software Importers}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+## Supported software outputs
+
+| Software | Version tested | Auto-detected | Import function |
+|----------|---------------|---------------|-----------------|
+| DIA-NN | ≥ 1.8 | ✓ | `import_diann()` |
+| Spectronaut | ≥ 15 | ✓ | `import_spectronaut()` |
+| FragPipe | ≥ 19 | ✓ | `import_fragpipe()` |
+| MaxQuant | ≥ 2.0 | ✓ | `import_maxquant()` |
+| Proteome Discoverer | ≥ 2.5 | ✓ | `import_pd()` |
+| Skyline | any | ✓ | `import_skyline()` |
+| Generic TSV/CSV | — | — | `import_generic()` |
+
+## Auto-detection
+
+```{r detect, eval=FALSE}
+library(proteoforge)
+sw <- detect_software("report.tsv")  # returns "diann", "spectronaut", etc.
+```
+
+`detect_software()` inspects filename patterns and column headers to identify
+the originating software.
+
+## DIA-NN
+
+ProteoForge supports three DIA-NN output types:
+
+```{r diann, eval=FALSE}
+# 1. Protein-group matrix (pg_matrix.tsv)
+pfd <- import_diann("pg_matrix.tsv", "samples.tsv")
+
+# 2. Gene-level matrix (genes_matrix.tsv)
+pfd <- import_diann("genes_matrix.tsv", "samples.tsv")
+
+# 3. Full precursor report (report.tsv) — aggregates to protein level
+pfd <- import_diann("report.tsv", "samples.tsv",
+                     config = list(input = list(
+                       diann_q_value = 0.01,
+                       diann_min_peptides = 1L
+                     )))
+```
+
+## Spectronaut
+
+```{r spectronaut, eval=FALSE}
+pfd <- import_spectronaut("spectronaut_export.tsv", "samples.tsv",
+                           config = list(input = list(
+                             spectronaut_q_cutoff = 0.01
+                           )))
+```
+
+The importer uses `PG.Quantity` by default, falling back to `EG.TotalQuantity`.
+
+## FragPipe
+
+```{r fragpipe, eval=FALSE}
+pfd <- import_fragpipe("combined_protein.tsv", "samples.tsv")
+```
+
+MaxLFQ columns are detected automatically (`MaxLFQ Intensity` suffix).
+Proteins with `Probability < 0.9` or `< 1` unique peptide are filtered.
+
+## MaxQuant
+
+```{r maxquant, eval=FALSE}
+# Protein groups
+pfd <- import_maxquant("proteinGroups.txt", "samples.tsv")
+
+# Phospho (STY) sites — expands multiplicity to separate rows
+pfd <- import_maxquant("Phospho (STY)Sites.txt", "samples.tsv",
+                        config = list(input = list(analysis_level = "phosphosite")))
+```
+
+## Proteome Discoverer
+
+```{r pd, eval=FALSE}
+pfd <- import_pd("proteins.txt", "samples.tsv",
+                  config = list(input = list(
+                    pd_sample_name_fn = function(x) sub("^Abundance: F\\d+: Sample, ", "", x)
+                  )))
+```
+
+## Skyline
+
+```{r skyline, eval=FALSE}
+pfd <- import_skyline("skyline_report.csv", "samples.tsv")
+```
+
+Column auto-detection handles Protein Name, Replicate Name, and Total Area.
+
+## Generic TSV/CSV
+
+```{r generic, eval=FALSE}
+pfd <- import_generic(
+  quant_file     = "my_data.tsv",
+  metadata_file  = "samples.tsv",
+  feature_id_col = "ProteinID",
+  config         = list(input = list(
+    analysis_level = "protein",
+    quant_type     = "LFQ"
+  ))
+)
+```
+
+Non-sample columns are inferred automatically from known patterns
+(`ProteinID`, `GeneSymbol`, `Description`, etc.).
+
+## Sample metadata format
+
+The metadata file must be a TSV with at minimum:
+
+```
+sample_id   condition   batch
+Sample_1    Control     B1
+Sample_2    Control     B2
+Sample_3    Treatment   B1
+Sample_4    Treatment   B2
+```
+
+- `sample_id`: must match the column names in the quantification file
+- `condition`: group labels for contrasts
+- `batch` (optional): used for batch correction and design matrix
+
+Use `validate_sample_metadata()` to check before importing.

@@ -1,0 +1,104 @@
+---
+title: "ProteoForge Quick Start"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{ProteoForge Quick Start}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE, comment = "#>",
+  fig.width = 7, fig.height = 4.5
+)
+```
+
+## Overview
+
+ProteoForge is a complete R/Bioconductor proteomics analysis platform providing:
+
+- Standardised importers for 6 major software outputs
+- QC, normalisation, and imputation
+- Limma-DEqMS differential abundance analysis
+- Functional enrichment (ORA/GSEA) and STRING network analysis
+- Phosphoproteomics with kinase activity inference
+- Reproducible reporting (Excel, Word, PPTX, Quarto HTML)
+- An interactive Shiny application
+
+## Installation
+
+```{r install, eval=FALSE}
+# Bioconductor dependencies first
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(c("limma", "DEqMS", "QFeatures"))
+
+# Install ProteoForge
+devtools::install_github("proteoforge/proteoforge")
+```
+
+## Minimal end-to-end example
+
+```{r example, eval=FALSE}
+library(proteoforge)
+
+# 1. Point to the bundled example dataset
+quant_file <- system.file("extdata", "generic_lfq_small",
+                           "protein_intensities.tsv", package = "proteoforge")
+meta_file  <- system.file("extdata", "generic_lfq_small",
+                           "sample_metadata.tsv",   package = "proteoforge")
+
+# 2. Import
+pfd <- import_generic(quant_file, meta_file,
+                       config = list(input = list(analysis_level = "protein",
+                                                   quant_type      = "LFQ")))
+
+# 3. QC
+qc <- compute_qc_metrics(pfd)
+print(qc$outlier_samples)
+
+# 4. Preprocess
+pfd <- filter_features(pfd)
+pfd <- log2_transform(pfd)
+pfd <- normalise_matrix(pfd, method = "median")
+pfd <- impute_missing(pfd, method = "mixed")
+
+# 5. Differential abundance
+config <- list(
+  stats = list(
+    contrasts     = "Treatment-Control",
+    fdr           = 0.05,
+    log2fc_cutoff = 1.0
+  )
+)
+design   <- build_design_matrix(pfd, config)
+contrasts <- build_contrast_matrix(design, config)
+results  <- run_limma_deqms(pfd, design, contrasts, config)
+
+# 6. Explore results
+head(results[["Treatment-Control"]][significant == TRUE])
+
+# 7. Volcano plot
+plot_volcano(results[["Treatment-Control"]], contrast = "Treatment-Control")
+```
+
+## Interactive analysis
+
+```{r shiny, eval=FALSE}
+launch_app()
+```
+
+## Targets-based reproducible pipeline
+
+```{r targets, eval=FALSE}
+# Set config path and run
+Sys.setenv(PF_CONFIG = "config.yml")
+targets::tar_make()
+```
+
+## Getting help
+
+- `?run_pipeline` — full pipeline documentation
+- `?import_diann`, `?import_spectronaut` — software-specific importers
+- `browseVignettes("proteoforge")` — all vignettes

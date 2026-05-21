@@ -1,0 +1,131 @@
+---
+title: "Statistical Methods in ProteoForge"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Statistical Methods in ProteoForge}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
+                       fig.width = 7, fig.height = 4.5)
+```
+
+## Preprocessing pipeline
+
+### Filtering
+
+`filter_features()` applies six filters in order:
+
+1. Remove contaminants and decoy entries (MaxQuant `+` flag; generic patterns)
+2. Require ≥ `min_valid_fraction` valid values in at least one condition
+3. Require ≥ `min_replicates` valid values per condition
+4. Remove all-NA rows
+5. Apply minimum intensity threshold
+6. Remove features with zero variance
+
+### Normalisation
+
+```{r norm, eval=FALSE}
+library(proteoforge)
+pfd <- normalise_matrix(pfd, method = "median")   # default
+pfd <- normalise_matrix(pfd, method = "quantile")
+pfd <- normalise_matrix(pfd, method = "vsn")
+pfd <- normalise_matrix(pfd, method = "cyclic_loess")
+```
+
+All methods operate on log2-transformed intensities.
+
+### Missingness classification
+
+ProteoForge classifies missing values as **MNAR** (missing not at random) or
+**MCAR** (missing completely at random) using a condition-level threshold:
+
+- A site/protein is **MNAR** if ≥ 60% of samples in a condition are missing
+  → implies the signal is genuinely below detection
+- Otherwise **MCAR**
+
+### Mixed imputation
+
+```{r impute, eval=FALSE}
+pfd <- impute_missing(pfd, method = "mixed")
+# MNAR entries: MinProb (random draws from left tail of observed distribution)
+# MCAR entries: kNN (k=5 nearest neighbours)
+```
+
+Other single-method options: `"minprob"`, `"mindet"`, `"knn"`, `"qrilc"`, `"rf"`.
+
+## Differential abundance: limma-DEqMS
+
+### Design and contrast matrices
+
+```{r design, eval=FALSE}
+config <- list(stats = list(contrasts = c("Treatment-Control", "DrugA-DrugB")))
+design    <- build_design_matrix(pfd, config)
+contrasts <- build_contrast_matrix(design, config)
+```
+
+`build_design_matrix()` creates a `~0 + condition` model; if a `batch` column
+is present it is included as `~0 + condition + batch`.
+
+### Fitting
+
+```{r fit, eval=FALSE}
+results <- run_limma_deqms(pfd, design, contrasts, config)
+```
+
+Steps:
+
+1. `limma::lmFit()` — linear model per feature
+2. `limma::contrasts.fit()` — extract specified contrasts
+3. `limma::eBayes(trend=TRUE, robust=TRUE)` — empirical Bayes moderation
+4. `DEqMS::spectraCounteBayes()` — peptide-count-based variance moderation
+5. BH correction of p-values per contrast
+6. Significance calls: `adj.P.Val < FDR & |log2FC| > threshold`
+
+DEqMS requires peptide count information stored in `feature_metadata`. When
+unavailable, the pipeline falls back to standard eBayes with a warning.
+
+### Results structure
+
+Each element of the returned list is a `data.table` with columns:
+
+| Column | Description |
+|--------|-------------|
+| `feature_id` | Feature identifier |
+| `GeneSymbol` | Gene name (if available) |
+| `log2FC` | log₂ fold-change |
+| `t` | moderated t-statistic |
+| `P.Value` | raw p-value |
+| `adj.P.Val` | BH-adjusted p-value |
+| `significant` | `TRUE` if both FDR and FC thresholds met |
+| `direction` | `"up"`, `"down"`, or `"ns"` |
+| `pct_imputed` | fraction of values imputed per feature |
+
+## Enrichment analysis
+
+### ORA
+
+```{r ora, eval=FALSE}
+# Uses detected proteome as background universe (never whole genome)
+ora_results <- run_ora(results[["Treatment-Control"]], pfd, config)
+```
+
+### GSEA
+
+```{r gsea, eval=FALSE}
+# Ranking: sign(log2FC) × -log10(adj.P.Val)
+gsea_results <- run_gsea(results[["Treatment-Control"]], config)
+```
+
+Both use `clusterProfiler` internally with reproducible database versioning.
+
+## Reproducibility
+
+Every run records:
+
+- SHA-256 hash of the full config: `write_param_hash()`
+- Full session info: `write_session_info()`
+- Timestamp-stamped output directories
+- `renv.lock` for package version pinning
